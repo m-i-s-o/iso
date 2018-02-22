@@ -61,7 +61,7 @@ def json_html():
         response_text = "よろしい、ならば盟友だ"
     response = slack_client.api_call(
         "chat.postMessage",
-        channel="#general",
+        channel="#ext-scratch",
         text=response_text,
         attachments=[]
     )
