@@ -8,7 +8,7 @@ from slackclient import SlackClient
 
 
 # Your app's Slack bot user token
-SLACK_BOT_TOKEN = os.environ.get("SLACK_ROBO_TOKEN")
+SLACK_BOT_TOKEN = os.environ.get("SLACK_ROBO_BOT_TOKEN")
 SLACK_VERIFICATION_TOKEN = os.environ.get("SLACK_ROBO_VERIFICATION_TOKEN")
 
 # Slack client for Web API requests
