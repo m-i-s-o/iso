@@ -50,7 +50,7 @@ def index():
         attachments=attachments_json
     )
 #redirect from button
-@app.route("/slack/json_html", methods=["POST"])
+@app.route("/json_html", methods=["POST"])
 def json_html():
 
     # Parse the request payload

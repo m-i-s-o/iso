@@ -13,7 +13,7 @@ def getitem(event, context):
     param_req = js_event_body["result"]["parameters"]["Request"]
     user_to_res = js_event_body["originalRequest"]["data"]["event"]["user"]
     response = client.get_item(
-        TableName='is_robo_data',
+        TableName='shakeDB',
         Key={
         "tool": {"S": param_tool},
         "request": {"S": param_req}
@@ -35,7 +35,7 @@ def getitem(event, context):
     param_tool = js_event_body["result"]["parameters"]["THXTool"]
     param_req = js_event_body["result"]["parameters"]["THXRequest"]
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('is_robo_data')
+    table = dynamodb.Table('shakeDB')
     response = table.update_item(
       Key={
         'tool': param_tool,
