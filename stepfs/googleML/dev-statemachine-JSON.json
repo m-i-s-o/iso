@@ -1,0 +1,70 @@
+** ["START"] QueからAPI Gw経由でGETリクエストが来る
+** inputはパラメータに
+** パラメータは以下3~6項目
+**** MLのアドレス
+**** MLに追加するアドレス
+**** http-reqのフラッグ
+**** (あれば)親QuestetraのprocessInstanceId
+**** (あれば)nodeNumber
+**** (あれば)key
+
+<<ML作成・設定変更>>
+** ["STATE"] CreateML
+**** 処理: パラメータ整形してGoogleにPOST, spam-moderation~~をALLOWにする(だめならリトライ)
+**** NEXT: エラーがなければ設定変更のfirstに
+
+<<ユーザー追加>>
+** ["STATE"] add_address2ml
+**** 処理: loop処理でMLにアドレス追加
+**** NEXT: Lambdaに返される値　←　ここの"$~~"の書き方を調べる
+
+** ["STATE"] NoAddress
+**** MLに追加するアドレスがなかった場合ここに遷移
+**** InputPathをしぼる
+**** 処理: http-reqが1ならslackに投稿、0なら元QuestetraにHTTP返す
+
+** ["STATE"] GoogleAPIerror
+**** GoogleAPIでのMLへのアドレス追加でエラーがあった場合ここに遷移
+**** InputPathをしぼる
+**** 処理: http-reqが1ならslackに投稿、0なら元QuestetraにHTTP返す
+
+** ["STATE"] Succeed
+**** エラーなく処理が終了した場合ここに遷移
+**** 処理: http-reqが1なら親QuestetraにHTTP POST、0なら元QuestetraにHTTP返す
+
+----------------------------------------
+
+{
+  "Comment": "will be called by questetra m507 to add mail addresses to G Suite ML",
+  "StartAt": "add_address2ml",
+  "States": {
+    "add_address2ml":{
+      "Comment": "add addresses to ML",
+      "Type": "Task",
+      "Resource": "+++++++++++++++++++++++++++++",
+      "ResultPath": "$.result",
+      "Next": "$."
+    },
+    "NoAddress": {
+      "Comment": "no address to add",
+      "Type": "Task",
+      "Resource": "+++++++++++++++++++++++++++++",
+      "ResultPath": "$.result",
+      "End": true
+    },
+    "GoogleAPIerror": {
+      "Comment": "an error occured with Google API",
+      "Type": "Task",
+      "Resource": "+++++++++++++++++++++++++++++",
+      "ResultPath": "$.result",
+      "End": true
+    },
+    "Succeed": {
+      "Comment": "successfully added to ML",
+      "Type": "Task",
+      "Resource": "+++++++++++++++++++++++++++++",
+      "ResultPath": "$.result",
+      "End": true
+    },
+  }
+}
