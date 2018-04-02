@@ -60,6 +60,8 @@ functions:
   Add2ML:
     handler: Add2ML.add_address2ml
 
+plugins:
+  - serverless-step-functions
 stepFunctions:
   stateMachines:
     CreateML:
@@ -67,37 +69,37 @@ stepFunctions:
       events:
         - http:
             path: create-ml
-            method: GET
+            method: POST
       definition:
-        Comment: "will be called by questetra m507 to create a G Suite ML",
-        StartAt: "CreateML",
+        Comment: "will be called by questetra m507 to create a G Suite ML"
+        StartAt: "CreateML"
         States: {
           CreateML: {
               Comment: "create a ML",
               Type: Task,
               Resource: arn:aws:lambda:ap-noetheast-1:148615456970:function:QueCoop-dev-CreateML,
-              ResultPath: $.result,
+              #ResultPath: $.result,
               End: true
+            }
           }
-        }
     Add2ML:
       name: Add2ML
       events:
         - http:
             path: add2ml
-            method: GET
+            method: POST
       definition:
-        Comment: "will be called by questetra m507 to add mail addresses to G Suite ML",
-        StartAt: "AddAddress2ML",
+        Comment: "will be called by questetra m507 to add mail addresses to G Suite ML"
+        StartAt: "AddAddress2ML"
         States: {
           AddAddress2ML: {
               Comment: "add addresses to ML",
               Type: Task,
               Resource: arn:aws:lambda:ap-noetheast-1:148615456970:function:QueCoop-dev-Add2ML,
-              ResultPath: $.result,
+              #ResultPath: $.result,
               End: true
+            }
           }
-      }
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -143,4 +145,3 @@ stepFunctions:
 #     NewOutput:
 #       Description: "Description for the output"
 #       Value: "Some output value"
-
