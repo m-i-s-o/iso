@@ -1,3 +1,26 @@
+function sendHttpPost(subject, message){
+   var payload =
+   {
+     "tickets" : [{
+         "subject": subject,
+         "comment": message
+   };
+
+   var params =
+   {
+     "method" : "post",
+     "payload" : payload
+   };
+   UrlFetchApp.fetch(<<API GatewayのURL>>, params);
+}
+
+function myFunction(){
+  var ticket_sbj = メールのタイトル
+  var ticket_msg = メールの本文;
+  response = sendHttpPost(ticket_sbj, ticket_msg);
+  Logger.log(response.getContentText());
+}
+
 function gmail_fw(){
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var sent = 0;
