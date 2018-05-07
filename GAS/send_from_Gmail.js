@@ -34,13 +34,16 @@ function gmail_fw(){
         }
         Utilities.sleep(1000);
       }
-      //Logger.log(mail_list);
       str_list = JSON.stringify(mail_list);
       sendHttpPost(str_list);
       label.addToThreads(threads);
     }
   catch (e) {
-    Logger.log(e)
+    var formattedDate = Utilities.formatDate(new Date(), "JST", "yyyy-MM-dd'T'HH:mm:ss'Z'");
+    var text = "Zendeskフィルタリング用メールアドレスからの転送起票に失敗しました。エラー内容:" + e;
+    var opstions = '{"text": ' + text + '}';
+    var response = UrlFetchApp.fetch('https://zgf9qx0f1m.execute-api.ap-northeast-1.amazonaws.com/dev/OpSys', options);
+    Logger.log(response.getContentText());
   }
 }
   
