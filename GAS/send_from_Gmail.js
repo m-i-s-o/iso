@@ -20,23 +20,26 @@ function gmail_fw(){
   var label = GmailApp.getUserLabelByName('FWed');
   var mail_list = [];
 
-
-  for (var i in threads) {
-    var thread = threads[i];
-    var msgs = thread.getMessages();
-
-    for(var m in msgs){
-      var hash = {};
-      var msg = msgs[m];
-      hash.from = msg.getFrom();
-      hash.subject = msg.getSubject();
-      hash.body = msg.getPlainBody().replace(/\r/g, '').replace(/\n\n/g, '\n').replace(/\n\n/g, '\n');
-      mail_list.push(hash);
+  try {
+    for (var i in threads) {
+      var thread = threads[i];
+      var msgs = thread.getMessages();
+        for(var m in msgs){
+          var hash = {};
+          var msg = msgs[m];
+          hash.from = msg.getFrom();
+          hash.subject = msg.getSubject();
+          hash.body = msg.getPlainBody().replace(/\r/g, '').replace(/\n\n/g, '\n').replace(/\n\n/g, '\n');
+          mail_list.push(hash);
+        }
+        Utilities.sleep(1000);
+      }
+      //Logger.log(mail_list);
+      str_list = JSON.stringify(mail_list);
+      sendHttpPost(str_list);
+      label.addToThreads(threads);
     }
-    Utilities.sleep(1000);
   }
-  //Logger.log(mail_list);
-  str_list = JSON.stringify(mail_list);
-  sendHttpPost(str_list);
-  label.addToThreads(threads);
-}
+  catch (e) {
+    Logger.log(e)
+  }
