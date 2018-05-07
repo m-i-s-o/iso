@@ -64,125 +64,46 @@ def post_request(url, param_dict):
         logger.error("%s: %s" % (type(e), e))
 
 
-# make_all_org_list()から呼ばれる
-# 1ページ分の組織リストについて組織名・組織IDの辞書をリストに追加
-def get_org_list(page, url):
-    logger.debug('--------------------\nstart <get_org_list>')
-    page += 1
-    logger.debug('page: {}'.format(page))
-    try:
-        org_dict = get_request(url)
-        for org in org_dict["results"]:
-            org_list.append({"org_name": org["name"], "org_id": org["id"]})
-        result = {"list": org_list}
-        if org_dict["next_page"] is not None:
-            # レスポンスが次のページに続く場合はmake_all_org_listにそのURLを返す
-            result["next_page"] = org_dict["next_page"]
-        logger.debug('org_list: {}'.format(org_list))
-        logger.debug('--------------------\n--------------------')
-        logger.debug('end of <get_org_list>\n--------------------')
-        return result
-    except Exception as e:
-        logger.error("%s: %s" % (type(e), e))
-
-
-# APIリクエストの結果が複数ページにわたる場合は対応しつつ、該当タグのついた組織一覧を作成
-def make_all_org_list():
-    logger.debug('--------------------\nstart <make_all_org_list>')
-    page = 0
-    QUERY_PARAMS = config["Zendesk_param_goodmsp"]["QUERY_PARAMS"]
-    ORG_LIST_URL = ZEN_URL + 'search.json?query=type:organization {}'.format(QUERY_PARAMS)
-
-    try:
-        get_list = get_org_list(page, ORG_LIST_URL)
-        while "next_page" in get_list.keys():
-            logger.debug('process next page')
-            get_list = get_org_list(page, get_list["next_page"])
-        logger.info('all organizations are listed.')
-        logger.debug('end of <make_all_org_list>\n--------------------')
-        return (org_list)
-    except Exception as e:
-        logger.error("%s: %s" % (type(e), e))
-
-
-# 「該当組織」にひもづくユーザー(送信先になるユーザー)のIDを取得
-def make_all_user_list(org_list):
-    logger.debug('--------------------\nstart <make_all_user_list>')
-    logger.debug('org_list: {}'.format(org_list))
-    global user_list
-    API_LIMIT = 50
-    i = 0
-    try:
-        # 組織リストのi番目以降の要素数が100以上であればi番目からi+100番目の要素についてmake_all_user_list
-        while len(org_list[i:]) >= API_LIMIT:
-            logger.debug('i = {}'.format(i))
-            logger.debug('処理するorg_listの中身: {}'.format(org_list[i:i+API_LIMIT]))
-            for org in org_list[i:i+API_LIMIT]:
-                get_user_in_org(org)
-            i += API_LIMIT
-            logger.info('this program going to sleep for 100 sec. from now')
-            sleep(100)
-            logger.info('this program going to be active again from now')
-        if len(org_list[i:]) >= 1:
-            for org in org_list[i:]:
-                get_user_in_org(org)
-
-        logger.debug('end of <make_all_user_list>\n--------------------')
-        return user_list
-    except Exception as e:
-        logger.error("%s: %s" % (type(e), e))
-
-
-# make_all_user_listから呼ばれる。1組織に紐づくユーザーのID・名前・組織名の辞書をリストに追加
-def get_user_in_org(org):
-    global user_list
-    global user_email_list
-    logger.debug('--------------------\nstart <get_user_in_org>')
-    id = org["org_id"]
-    orgid2users_url = ZEN_URL + 'organizations/{}/users.json'.format(id)
-    try:
-        org_users = get_request(orgid2users_url)
-        for user in org_users["users"]:
-            user_email = get_user_email(user["id"])
-            if 'serverworks.co.jp' in user_email and user["id"] not in user_list:
-                logger.debug('MLなので起票先リストに追加')
-                user_list.append(user["id"])
-        logger.debug('end of <get_user_in_org>\n--------------------')
-        return user_list
-    except Exception as e:
-        logger.error("%s: %s" % (type(e), e))
-
-
-def get_user_email(id):
-    try:
-        logger.debug('--------------------\nstart <get_user_email>')
-        show_user_url = ZEN_URL + 'users/{}.json'.format(id)
-        logger.info(show_user_url)
-        user_info = get_request(show_user_url)
-        user_email = user_info["user"]["email"]
-        logger.debug('end of <get_user_email>\n--------------------')
-        return user_email
-    except Exception as e:
-        logger.error("%s: %s" % (type(e), e))
-
-
 # 起票するチケットのパラメータを辞書型にまとめる
-def list_ticket_parameters(event, user_list):
+def list_ticket_parameters(event):
     logger.debug('--------------------\nstart <list_ticket_parameters>')
     logger.info('user_list: {}'.format(user_list))
     post_tickets_param = []
+    mail_list = event["mail_list"]
     try:
-        for user_no in range(len(user_list)):  # ユーザーごとにチケットの内容を作成していく
+        for mail_no in range(len(mail_list)):  # ユーザーごとにチケットの内容を作成していく
             param = json.loads(config["Zendesk_param_goodmsp"]["TICKET_PARAM"])
-            logger.info('userno: {}'.format(user_no))
-            param["subject"] = event["subject"]
-            param["comment"]["body"] = ticket_comment  # .format(org_name, user_name)
-            param["requester_id"] = user_list[user_no]
+            logger.info('userno: {}'.format(mail_no))
+            param["subject"] = mail_list[mail_no]["subject"]
+            param["comment"]["body"] = mail_list[mail_no]["body"]  # .format(org_name, user_name)
+            # リクエスタIDとをゲット
+            email = event["mail_list"][mail_no]["from"]
+            logger.debug(email)
+            requester_id = get_id(email)
+            param["requester_id"] = requester_id
             logger.debug('add param: {}'.format(param))
             # 起票するすべてのチケットの辞書を保持するためのリストに、新しい辞書を追加
             post_tickets_param.append(param)
         logger.debug('end of <list_ticket_parameters>\n--------------------')
         return post_tickets_param
+    except Exception as e:
+        logger.error("%s: %s" % (type(e), e))
+
+
+def get_id(email):
+    logger.debug('--------------------\nstart <get_id>')
+    try:
+        start = email.find('<') + 1
+        end = email.find('@')
+        ml_name = email[start:end]
+        logger.debug(ml_name)
+
+        comp_user_url = ZEN_URL + 'users/autocomplete.json?name={}'.format(ml_name)
+        user_info = get_request(comp_user_url)
+        user_id = user_info["users"][0]["id"]
+        logger.debug('end of <get_id>\n--------------------')
+        return user_id
+
     except Exception as e:
         logger.error("%s: %s" % (type(e), e))
 
@@ -272,11 +193,11 @@ def create_many_tickets(group, req_list_len):
 
 
 def main(event, context):
-    print(event)
-    print(type(event))
-    org_list = make_all_org_list()
-    user_list = make_all_user_list(org_list)
-    ticket_list = list_ticket_parameters(event, user_list)
-    send_to_division_group(ticket_list)
-    logger.info('org_list(lenhth: {0}): {1}'.format(len(org_list), org_list))
-    logger.info('user_list(length:{0}): {1}'.format(len(user_list), user_list))
+    try:
+        print(event)
+        print(type(event))
+        ticket_list = list_ticket_parameters(event)
+        send_to_division_group(ticket_list)
+        return('completed')
+    except Exception as e:
+        logger.error("%s: %s" % (type(e), e))
