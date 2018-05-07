@@ -39,7 +39,8 @@ function gmail_fw(){
       sendHttpPost(str_list);
       label.addToThreads(threads);
     }
-  }
   catch (e) {
     Logger.log(e)
   }
+}
+  
