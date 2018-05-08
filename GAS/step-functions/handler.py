@@ -79,31 +79,11 @@ def list_ticket_parameters(event):
             # リクエスタIDとをゲット
             email = event["mail_list"][mail_no]["from"]
             logger.debug(email)
-            requester_id = get_id(email)
-            param["requester_id"] = requester_id
             logger.debug('add param: {}'.format(param))
             # 起票するすべてのチケットの辞書を保持するためのリストに、新しい辞書を追加
             post_tickets_param.append(param)
         logger.debug('end of <list_ticket_parameters>\n--------------------')
         return post_tickets_param
-    except Exception as e:
-        logger.error("%s: %s" % (type(e), e))
-
-
-def get_id(email):
-    logger.debug('--------------------\nstart <get_id>')
-    try:
-        start = email.find('<') + 1
-        end = email.find('@')
-        ml_name = email[start:end]
-        logger.debug(ml_name)
-
-        comp_user_url = ZEN_URL + 'users/autocomplete.json?name={}'.format(ml_name)
-        user_info = get_request(comp_user_url)
-        user_id = user_info["users"][0]["id"]
-        logger.debug('end of <get_id>\n--------------------')
-        return user_id
-
     except Exception as e:
         logger.error("%s: %s" % (type(e), e))
 
