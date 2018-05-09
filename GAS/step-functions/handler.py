@@ -69,16 +69,13 @@ def list_ticket_parameters(event):
     logger.debug('--------------------\nstart <list_ticket_parameters>')
     logger.info('user_list: {}'.format(user_list))
     post_tickets_param = []
-    mail_list = event["mail_list"]
+    mail_list = event["input"]["mail_list"]
     try:
         for mail_no in range(len(mail_list)):  # ユーザーごとにチケットの内容を作成していく
             param = json.loads(config["Zendesk_param_goodmsp"]["TICKET_PARAM"])
             logger.info('userno: {}'.format(mail_no))
             param["subject"] = mail_list[mail_no]["subject"]
-            param["comment"]["body"] = mail_list[mail_no]["body"]  # .format(org_name, user_name)
-            # リクエスタIDとをゲット
-            email = event["mail_list"][mail_no]["from"]
-            logger.debug(email)
+            param["comment"]["body"] = mail_list[mail_no]["body"]
             logger.debug('add param: {}'.format(param))
             # 起票するすべてのチケットの辞書を保持するためのリストに、新しい辞書を追加
             post_tickets_param.append(param)
