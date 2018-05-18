@@ -23,10 +23,6 @@ API_LIMIT = int(config["general"]["API_LIMIT"])
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-org_list = []
-user_list = []
-user_email_list = []
-
 
 def get_request(url):
     logger.debug('--------------------')
@@ -67,9 +63,20 @@ def post_request(url, param_dict):
 # 起票するチケットのパラメータを辞書型にまとめる
 def list_ticket_parameters(event):
     logger.debug('--------------------\nstart <list_ticket_parameters>')
-    logger.info('user_list: {}'.format(user_list))
     post_tickets_param = []
-    mail_list = event["input"]["mail_list"]
+    logger.debug('keys: {}'.format(event.keys()))
+    logger.debug('input: {}'.format(event["input"]))
+    logger.debug(type(event["input"]))
+    str_input = event["input"]
+    logger.debug('str: {}'.format(str_input))
+    str_input = str_input.replace("\"", "\'").replace("\'mail_list\'", "\"mail_list\"").replace("\'subject\':\'", "\"subject\":\"").replace("\',\'body\':\'", "\",\"body\":\"")
+    str_input = str_input.replace("\'}", "\"}")
+    str_input = str_input.strip(" \n")
+    logger.info(str_input)
+    json_input = json.loads(str_input, strict=False)
+    logger.debug('json: {}'.format(json_input))
+    mail_list = json_input["mail_list"]
+    logger.debug(mail_list)
     try:
         for mail_no in range(len(mail_list)):  # ユーザーごとにチケットの内容を作成していく
             param = json.loads(config["Zendesk_param_goodmsp"]["TICKET_PARAM"])
@@ -80,6 +87,7 @@ def list_ticket_parameters(event):
             # 起票するすべてのチケットの辞書を保持するためのリストに、新しい辞書を追加
             post_tickets_param.append(param)
         logger.debug('end of <list_ticket_parameters>\n--------------------')
+        logger.info(post_tickets_param)
         return post_tickets_param
     except Exception as e:
         logger.error("%s: %s" % (type(e), e))
@@ -171,8 +179,8 @@ def create_many_tickets(group, req_list_len):
 
 def main(event, context):
     try:
-        print(event)
-        print(type(event))
+        logger.info('event: {}'.format(event))
+        logger.debug(event.keys())
         ticket_list = list_ticket_parameters(event)
         send_to_division_group(ticket_list)
         return('completed')
