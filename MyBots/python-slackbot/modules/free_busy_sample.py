@@ -57,13 +57,13 @@ def main():
       "calendarExpansionMax": 5,
       "items": [
         {
-          "id": "（カレンダーID）"
+          "id": "primary"
         }
       ]
     }
 
     result = calendar_service.freebusy().query(body=check).execute()
-    busies = result["calendars"]["（カレンダーID）"]["busy"]
+    busies = result["calendars"]["primary"]["busy"]
     calced_mytime = calc_mytime(busies, today_end)
     return calced_mytime
 
